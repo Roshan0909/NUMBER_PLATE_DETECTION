@@ -1,0 +1,18 @@
+# Core dependencies
+Flask
+Werkzeug
+opencv-python
+numpy
+Pillow
+
+# Object detection
+ultralytics
+
+# OCR components
+easyocr
+torch
+torchvision
+
+# Additional dependencies
+python-dotenv
+gunicorn

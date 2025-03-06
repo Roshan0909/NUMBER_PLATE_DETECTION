@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>License Plate Detection System</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --bg-color: #f8f9fa;
+            --text-color: #333;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --card-bg: #fff;
+            --border-color: #ddd;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .upload-section, .results-section {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .upload-section h2, .results-section h2 {
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .file-input-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-input-label {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .file-input-label:hover {
+            background-color: #2980b9;
+        }
+
+        .file-name {
+            margin-top: 10px;
+            text-align: center;
+            font-style: italic;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #27ae60;
+        }
+
+        .btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .status-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .status-message {
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+            display: inline-block;
+            min-width: 200px;
+        }
+
+        .status-processing {
+            background-color: #f8f9fa;
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .status-completed {
+            background-color: #f8f9fa;
+            border-left: 4px solid var(--secondary-color);
+        }
+
+        .status-error {
+            background-color: #f8f9fa;
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary-color);
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .result-card {
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .result-card h3 {
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .result-value {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .detection-image {
+            max-width: 100%;
+            height: auto;
+            margin-top: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            display: block;
+        }
+
+        .detection-indicator {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .detected {
+            background-color: var(--secondary-color);
+        }
+
+        .not-detected {
+            background-color: var(--danger-color);
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background-color: var(--primary-color);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .image-container {
+            margin-top: 15px;
+        }
+
+        .image-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .annotated-frame {
+            width: 100%;
+            margin-top: 20px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>License Plate Detection System</h1>
+            <p>Upload a video to detect license plates, helmets, and riders</p>
+        </header>
+
+        <section class="upload-section">
+            <h2>Upload Video</h2>
+            <div class="file-input-container">
+                <input type="file" id="videoInput" class="file-input" accept=".mp4,.avi,.mov,.mkv">
+                <label for="videoInput" class="file-input-label">
+                    Select Video File
+                </label>
+                <div id="fileName" class="file-name">No file selected</div>
+            </div>
+            <button id="uploadBtn" class="btn" disabled>Upload & Process</button>
+            
+            <div id="progressContainer" class="progress-bar-container hidden">
+                <div id="progressBar" class="progress-bar"></div>
+            </div>
+            
+            <div id="statusContainer" class="status-container hidden">
+                <div id="statusMessage" class="status-message">
+                    <span id="spinner" class="spinner"></span>
+                    <span id="statusText">Uploading...</span>
+                </div>
+            </div>
+        </section>
+
+        <section id="resultsSection" class="results-section hidden">
+            <h2>Detection Results</h2>
+            <div class="results-grid">
+                <div class="result-card">
+                    <h3>License Plate</h3>
+                    <div class="detection-indicator" id="plateIndicator"></div>
+                    <span id="plateDetected">Detecting...</span>
+                    
+                    <div id="plateImageContainer" class="image-container hidden">
+                        <p class="image-title">Plate Image:</p>
+                        <img id="plateImage" class="detection-image" alt="License Plate" onerror="this.style.display='none'; document.getElementById('plateImageError').style.display='block';">
+                        <p id="plateImageError" style="display:none; color:var(--danger-color);">Image could not be loaded</p>
+                    </div>
+                </div>
+                
+                <div class="result-card">
+                    <h3>Plate Number</h3>
+                    <div class="result-value" id="plateNumber">Processing...</div>
+                </div>
+                
+                <div class="result-card">
+                    <h3>Helmet Detection</h3>
+                    <div class="detection-indicator" id="helmetIndicator"></div>
+                    <span id="helmetDetected">Detecting...</span>
+                </div>
+                
+                <!-- <div class="result-card">
+                    <h3>Rider Detection</h3>
+                    <div class="detection-indicator" id="riderIndicator"></div>
+                    <span id="riderDetected">Detecting...</span>
+                </div> -->
+            </div>
+            
+            <div class="annotated-frame">
+                <h3>Video Analysis</h3>
+                <p>Annotated frame from video analysis:</p>
+                <div id="frameImageContainer" class="image-container">
+                    <img id="frameImage" class="detection-image" alt="Annotated Frame" onerror="this.style.display='none'; document.getElementById('frameImageError').style.display='block';">
+                    <p id="frameImageError" style="display:none; color:var(--danger-color);">Annotated frame could not be loaded</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // DOM Elements
+        const videoInput = document.getElementById('videoInput');
+        const fileName = document.getElementById('fileName');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const statusContainer = document.getElementById('statusContainer');
+        const statusText = document.getElementById('statusText');
+        const statusMessage = document.getElementById('statusMessage');
+        const resultsSection = document.getElementById('resultsSection');
+        const plateIndicator = document.getElementById('plateIndicator');
+        const plateDetected = document.getElementById('plateDetected');
+        const plateImageContainer = document.getElementById('plateImageContainer');
+        const plateImage = document.getElementById('plateImage');
+        const plateNumber = document.getElementById('plateNumber');
+        const helmetIndicator = document.getElementById('helmetIndicator');
+        const helmetDetected = document.getElementById('helmetDetected');
+        const riderIndicator = document.getElementById('riderIndicator');
+        const riderDetected = document.getElementById('riderDetected');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const frameImage = document.getElementById('frameImage');
+        const frameImageContainer = document.getElementById('frameImageContainer');
+
+        // Variables to track job status
+        let currentJobId = null;
+        let statusCheckInterval = null;
+
+        // File input change handler
+        videoInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                fileName.textContent = this.files[0].name;
+                uploadBtn.disabled = false;
+            } else {
+                fileName.textContent = 'No file selected';
+                uploadBtn.disabled = true;
+            }
+        });
+
+        // Upload button click handler
+        uploadBtn.addEventListener('click', function() {
+            if (videoInput.files.length === 0) return;
+            
+            // Create FormData and append video file
+            const formData = new FormData();
+            formData.append('video', videoInput.files[0]);
+            
+            // Show progress and status
+            progressContainer.classList.remove('hidden');
+            statusContainer.classList.remove('hidden');
+            statusText.textContent = 'Uploading...';
+            statusMessage.className = 'status-message status-processing';
+            uploadBtn.disabled = true;
+            
+            // Reset any previous results
+            resultsSection.classList.add('hidden');
+            plateImageContainer.classList.add('hidden');
+            document.getElementById('plateImageError').style.display = 'none';
+            document.getElementById('frameImageError').style.display = 'none';
+            
+            // Upload the video
+            const xhr = new XMLHttpRequest();
+            
+            // Track upload progress
+            xhr.upload.addEventListener('progress', function(event) {
+                if (event.lengthComputable) {
+                    const percentComplete = (event.loaded / event.total) * 100;
+                    progressBar.style.width = percentComplete + '%';
+                }
+            });
+            
+            xhr.open('POST', '/upload', true);
+            
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    currentJobId = response.job_id;
+                    
+                    // Show initial status
+                    statusText.textContent = response.message;
+                    
+                    // Reset progress bar for processing phase
+                    progressBar.style.width = '0%';
+                    
+                    // Show results section
+                    resultsSection.classList.remove('hidden');
+                    
+                    // Start checking status
+                    startStatusChecking();
+                } else {
+                    const response = JSON.parse(xhr.responseText);
+                    statusText.textContent = 'Error: ' + (response.error || 'Unknown error');
+                    statusMessage.className = 'status-message status-error';
+                    uploadBtn.disabled = false;
+                }
+            };
+            
+            xhr.onerror = function() {
+                statusText.textContent = 'Network error occurred';
+                statusMessage.className = 'status-message status-error';
+                uploadBtn.disabled = false;
+            };
+            
+            xhr.send(formData);
+        });
+
+        // Function to preload an image to ensure it's cached
+        function preloadImage(url) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(url);
+                img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
+                img.src = url;
+            });
+        }
+
+        // Start polling for job status
+        function startStatusChecking() {
+            if (statusCheckInterval) {
+                clearInterval(statusCheckInterval);
+            }
+            
+            let progress = 0;
+            
+            statusCheckInterval = setInterval(() => {
+                fetch(`/status/${currentJobId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Update status message
+                        statusText.textContent = data.message || data.status;
+                        
+                        // Update progress for visual feedback (simulated)
+                        if (data.status === 'processing') {
+                            progress += 5;
+                            if (progress > 90) progress = 90;
+                            progressBar.style.width = progress + '%';
+                            statusMessage.className = 'status-message status-processing';
+                        }
+                        
+                        // Check if processing is completed
+                        if (data.status === 'completed') {
+                            progressBar.style.width = '100%';
+                            statusMessage.className = 'status-message status-completed';
+                            
+                            // Preload images before updating the UI
+                            const imagePromises = [];
+                            
+                            if (data.results && data.results.plate_image) {
+                                imagePromises.push(preloadImage(data.results.plate_image));
+                            }
+                            
+                            if (data.results && data.results.frame_image) {
+                                imagePromises.push(preloadImage(data.results.frame_image));
+                            }
+                            
+                            // Wait for images to load or fail
+                            Promise.allSettled(imagePromises).then(() => {
+                                updateResults(data.results);
+                            });
+                            
+                            clearInterval(statusCheckInterval);
+                            uploadBtn.disabled = false;
+                        }
+                        
+                        // Check if there was an error
+                        if (data.status === 'error') {
+                            statusMessage.className = 'status-message status-error';
+                            clearInterval(statusCheckInterval);
+                            uploadBtn.disabled = false;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error checking status:', error);
+                        statusText.textContent = 'Error checking status';
+                        statusMessage.className = 'status-message status-error';
+                    });
+            }, 2000);
+        }
+
+        // Update the results display
+        function updateResults(results) {
+            if (!results) return;
+            
+            // Update license plate detection
+            if (results.plate_image) {
+                plateIndicator.className = 'detection-indicator detected';
+                plateDetected.textContent = 'Detected';
+                plateImageContainer.classList.remove('hidden');
+                
+                // Set image path and add cache-busting parameter
+                plateImage.src = results.plate_image + '?t=' + new Date().getTime();
+                plateImage.style.display = 'block';
+                document.getElementById('plateImageError').style.display = 'none';
+            } else {
+                plateIndicator.className = 'detection-indicator not-detected';
+                plateDetected.textContent = 'Not Detected';
+                plateImageContainer.classList.add('hidden');
+            }
+            
+            // Update plate number
+            plateNumber.textContent = results.plate_text || 'No text recognized';
+            
+            // Update helmet detection
+            if (results.helmet_detected) {
+                helmetIndicator.className = 'detection-indicator detected';
+                helmetDetected.textContent = 'Detected';
+            } else {
+                helmetIndicator.className = 'detection-indicator not-detected';
+                helmetDetected.textContent = 'Not Detected';
+            }
+            
+            // // Update rider detection
+            // if (results.rider_detected) {
+            //     riderIndicator.className = 'detection-indicator detected';
+            //     riderDetected.textContent = 'Detected';
+            // } else {
+            //     riderIndicator.className = 'detection-indicator not-detected';
+            //     riderDetected.textContent = ' Detected';
+            // }
+            
+            // Update annotated frame
+            if (results.frame_image) {
+                // Set image path and add cache-busting parameter
+                frameImage.src = results.frame_image + '?t=' + new Date().getTime();
+                frameImage.style.display = 'block';
+                document.getElementById('frameImageError').style.display = 'none';
+            } else {
+                frameImage.style.display = 'none';
+                document.getElementById('frameImageError').style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>
